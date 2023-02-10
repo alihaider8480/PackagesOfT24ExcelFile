@@ -2,9 +2,10 @@
 
 --------------------------------------------------------------------------------------------------------------------------------------
                                                       packages details
-                                                  how we can extract complete package from others
- 1 first we run routine that routine work to extract HM helptext menu
-                                                  
+                                                  how we can extract complete package from others environment
+ 1: first we run routine that routine work to extract HM helptext menu
+          we have 2 routines but we execute one only MENU.PROCESSOR it will call second one own  MENU.EXTRACTOR
+ 2: when it execute succesfuly it create a file in &como... if this file is not be there we can copy all record from classic mode when we execute MENU.PROCESSOR all             record showing in classic mode too
 first we execute HM helpText menu routine and get all record from there and in that record 
 we put in this excel file or maintaine it and in that file we wrote opposite rename of that field name those we change our prefix
 this file is a sample of PKMB Trade Factory.xlsx this
