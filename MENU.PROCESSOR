@@ -1,0 +1,90 @@
+*-----------------------------------------------------------------------------
+* <Rating>99</Rating>
+*-----------------------------------------------------------------------------
+***Developed by : Sohaib Khalil
+
+    SUBROUTINE MENU.PROCESSOR
+
+    $INSERT I_COMMON
+    $INSERT I_EQUATE
+    $INSERT I_F.HELPTEXT.MAINMENU
+    $INSERT I_F.HELPTEXT.MENU
+    $INSERT I_MENU.PROCESSOR
+
+    FN.HMM = "F.HELPTEXT.MAINMENU"
+    F.HMM  = ""
+    CALL OPF(FN.HMM, F.HMM)
+
+    FN.HM = "F.HELPTEXT.MENU"
+    F.HM  = ""
+    CALL OPF(FN.HM, F.HM)
+
+    FN.PF = "F.PGM.FILE"
+    F.PF  = ""
+    CALL OPF(FN.PF, F.PF)
+
+    FN.API = "F.EB.API"
+    F.API  = ""
+    CALL OPF(FN.API, F.API)
+
+
+    FN.VER = "F.VERSION"
+    F.VER  = ""
+    CALL OPF(FN.VER, F.VER)
+
+    FN.EI = "F.ENQUIRY"
+    F.EI  = ""
+    CALL OPF(FN.EI, F.EI)
+
+    FN.AB = "F.ABBREVIATION"
+    F.AB  = ""
+    CALL OPF(FN.AB, F.AB)
+
+    FN.SS = "F.STANDARD.SELECTION"
+    F.SS  = ""
+    CALL OPF(FN.SS, F.SS)
+
+    FN.DSF = "F.DEAL.SLIP.FORMAT"
+    F.DSF  = ""
+    CALL OPF(FN.DSF, F.DSF)
+
+    FN.COS = "F.EB.COMPOSITE.SCREEN"
+    F.COS  = ""
+    CALL OPF(FN.COS, F.COS)
+
+    FN.TAB = "F.EB.TABBED.SCREEN"
+    F.TAB  = ""
+    CALL OPF(FN.TAB, F.TAB)
+
+    PRINT "ENTER MENU ID:"
+    INPUT HMM.ID
+
+    CALL F.READ(FN.HMM, HMM.ID, R.HMM, F.HMM, HMM.ERR)
+    EXECUTE "COMO ON ":HMM.ID:".txt"
+
+    IF NOT(HMM.ERR) THEN
+        PRINT HMM.ID:',':R.HMM<EB.MME.TITLE,1>
+
+        PENDING.LIST = ""
+        HM.IDS = CHANGE(R.HMM<EB.MME.ID.OF.HELP.MENU>, VM, FM)
+    END
+    ELSE
+        HM.IDS = HMM.ID
+    END
+
+    PENDING.LIST = HM.IDS : FM : PENDING.LIST
+
+    LOOP
+    WHILE PENDING.LIST
+        REMOVE HM.ID   FROM PENDING.LIST SETTING HM.POS
+
+        DEL PENDING.LIST<1>
+
+        HM.ERR = ""
+        TYPE = ''
+        IF NOT(HM.ID) OR HM.ID EQ '*' THEN CONTINUE
+        CALL MENU.EXTRACTOR(HM.ID, TYPE)
+    REPEAT
+    EXECUTE "COMO OFF"
+    RETURN
+END

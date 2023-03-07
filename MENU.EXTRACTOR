@@ -1,0 +1,478 @@
+*-----------------------------------------------------------------------------
+* <Rating>1133</Rating>
+*-----------------------------------------------------------------------------
+    SUBROUTINE MENU.EXTRACTOR(HM.ID, TYPE)
+***Developed by : Sohaib Khalil
+    $INSERT I_COMMON
+    $INSERT I_EQUATE
+    $INSERT I_F.HELPTEXT.MAINMENU
+    $INSERT I_F.HELPTEXT.MENU
+    $INSERT I_F.VERSION
+    $INSERT I_F.ENQUIRY
+    $INSERT I_F.ABBREVIATION
+    $INSERT I_F.STANDARD.SELECTION
+    $INSERT I_F.DEAL.SLIP.FORMAT
+    $INSERT I_F.EB.COMPOSITE.SCREEN
+    $INSERT I_F.EB.TABBED.SCREEN
+    $INSERT I_F.PGM.FILE
+    $INSERT I_F.EB.API
+    $INSERT I_MENU.PROCESSOR
+
+FN.PF = "F.PGM.FILE"
+F.PF = ''
+CALL OPF(FN.PF,F.PF)
+FN.API = "F.EB.API"
+F.API = ''
+CALL OPF(FN.API,F.API)
+
+    CALL F.READ(FN.HM, HM.ID, R.HM, F.HM, HM.ERR)
+
+    IF NOT(HM.ERR) AND (TYPE EQ '') THEN
+
+        HM.COUNT  = DCOUNT(R.HM<EB.MEN.APPLICATION>, VM)
+        FOR I = 1 TO HM.COUNT
+            SUB.HM.ID   = R.HM<EB.MEN.APPLICATION, I>
+            IF HM.ID EQ '' THEN CONTINUE
+
+            TYPE = ''
+            CALL MENU.EXTRACTOR(SUB.HM.ID, TYPE)
+
+        NEXT I
+
+        CRT "HELPTEXT.MENU>":HM.ID
+    END
+    ELSE
+
+        IF (FIELD(HM.ID, " ", 1) EQ 'ENQ') OR (FIELD(HM.ID, " ", 1) EQ 'QUERY') OR (TYPE EQ 'ENQ') THEN
+            IF INDEX(HM.ID, " ", 1) THEN
+                ENQUIRY.ID = FIELD(HM.ID, " ", 2)
+            END
+            ELSE
+                ENQUIRY.ID = HM.ID
+            END
+
+            GOSUB COPY.ENQUIRY
+            RETURN
+        END
+        IF (FIELD(HM.ID, " ", 1) EQ 'COS') OR (TYPE EQ 'COS') THEN
+
+            IF INDEX(HM.ID, " ", 1) THEN
+                COS.ID = FIELD(HM.ID, " ", 2)
+            END
+            ELSE
+                COS.ID = HM.ID
+            END
+
+            GOSUB COPY.COS
+            RETURN
+        END
+        IF (FIELD(HM.ID, " ", 1) EQ 'TAB') OR (TYPE EQ 'TAB') THEN
+
+            IF INDEX(HM.ID, " ", 1) THEN
+                TAB.ID = FIELD(HM.ID, " ", 2)
+            END
+            ELSE
+                TAB.ID = HM.ID
+            END
+
+            GOSUB COPY.TAB
+            RETURN
+        END
+        IF INDEX(HM.ID, ",", 1) THEN
+            APPL       = FIELD(HM.ID, ",", 1)
+            APPL.VER   = FIELD(HM.ID, ",", 2)
+            CALL F.READ(FN.AB, APPL, R.AB, F.AB, AB.ERR)
+            IF NOT(AB.ERR) THEN
+                APPL = R.AB<EB.ABB.ORIGINAL.TEXT>
+            END
+            VERSION.ID = APPL:",":FIELD(APPL.VER, ' ',1)
+            GOSUB COPY.MAIN.VERSION
+
+            RETURN
+        END
+
+    END
+    RETURN
+
+COPY.ENQUIRY:
+
+    IF ENQUIRY.ID EQ '' THEN RETURN
+    CALL F.READ(FN.EI, ENQUIRY.ID, R.EI, F.EI, EI.ERR)
+
+    IF NOT(EI.ERR) THEN
+
+        IF FIELD(R.EI<ENQ.FILE.NAME>,'.',1) EQ 'NOFILE' THEN
+            SS.ID = R.EI<ENQ.FILE.NAME>
+            GOSUB COPY.SS
+        END
+
+        BLD.COUNT = DCOUNT(R.EI<ENQ.BUILD.ROUTINE>, VM)
+        FOR K = 1 TO BLD.COUNT
+            ROUTINE.NAME = R.EI<ENQ.BUILD.ROUTINE, K>
+            GOSUB COPY.ROUTINE
+
+        NEXT K
+
+        FLD.COUNT = DCOUNT(R.EI<ENQ.FIELD.NAME>, VM)
+        FOR K = 1 TO FLD.COUNT
+            CNV.COUNT = DCOUNT(R.EI<ENQ.CONVERSION, K>, SM)
+            FOR L = 1 TO CNV.COUNT
+                IF R.EI<ENQ.CONVERSION, K, L>[1,1] EQ '@' THEN
+                    ROUTINE.NAME = TRIM(FIELD(R.EI<ENQ.CONVERSION, K, L>, "@", 2), '', 'F')
+                    GOSUB COPY.ROUTINE
+                END
+            NEXT L
+        NEXT K
+
+        NXTENQ.COUNT = DCOUNT(R.EI<ENQ.ENQUIRY.NAME>, VM)
+        FOR K = 1 TO NXTENQ.COUNT
+            ENQVI.NAME = R.EI<ENQ.ENQUIRY.NAME, K>
+            IF INDEX(ENQVI.NAME, ",", 1) THEN
+                TYPE = 'VI'
+            END
+            ELSE
+			Y.VAR = FIELD(ENQVI.NAME, " ", 1)
+				IF FIELD(ENQVI.NAME, " ", 1) EQ 'COS' THEN
+                TYPE = 'COS'
+				END ELSE
+				TYPE = 'ENQ'
+				END
+            END
+            CALL MENU.EXTRACTOR(ENQVI.NAME, TYPE)
+
+        NEXT K
+
+        CRT "ENQUIRY>":ENQUIRY.ID
+
+    END
+
+    RETURN
+
+COPY.ASSOC.VERSION:
+
+    CALL F.READ(FN.VER, ASSOC.VERSION.ID, R.ASSOC.VER, F.VER, VER.ERR)
+
+    IF NOT(VER.ERR) THEN
+
+        ENQ.COUNT = DCOUNT(R.ASSOC.VER<EB.VER.DROP.DOWN>, VM)
+        FOR M = 1 TO ENQ.COUNT
+            ENQUIRY.ID = R.ASSOC.VER<EB.VER.DROP.DOWN, M>
+            GOSUB COPY.ENQUIRY
+
+        NEXT M
+
+        CRT "VERSION>":ASSOC.VERSION.ID
+
+    END
+
+    RETURN
+
+COPY.COS:
+
+    CALL F.READ(FN.COS, COS.ID, R.COS, F.COS, COS.ERR)
+
+    IF NOT(COS.ERR) THEN
+
+        CONTENT.COUNT = DCOUNT(R.COS<EB.CS.CONTENT.TYPE>, VM)
+        FOR M = 1 TO CONTENT.COUNT
+            CONTENT.ID = R.COS<EB.CS.CONTENT.TYPE, M>
+
+            IF CONTENT.ID EQ 'ENQ' THEN
+
+                ENQUIRY.ID = FIELD(R.COS<EB.CS.CONTENT, M>, " ",1)
+                GOSUB COPY.ENQUIRY
+
+            END
+            IF CONTENT.ID EQ 'COS' THEN
+
+                COS.ID1 = FIELD(R.COS<EB.CS.CONTENT, M>, " ",1)
+                TYPE = 'COS'
+                CALL MENU.EXTRACTOR(COS.ID1, TYPE)
+
+            END
+            IF CONTENT.ID EQ 'TAB' THEN
+
+                TAB.ID1 = FIELD(R.COS<EB.CS.CONTENT, M>, " ",1)
+                TYPE = 'TAB'
+                CALL MENU.EXTRACTOR(TAB.ID1, TYPE)
+
+            END
+
+        NEXT M
+
+        CRT "EB.COMPOSITE.SCREEN>":COS.ID
+
+    END
+
+    RETURN
+
+COPY.TAB:
+
+    CALL F.READ(FN.TAB, TAB.ID, R.TAB, F.TAB, TAB.ERR)
+
+    IF NOT(TAB.ERR) THEN
+
+        TABCONT.COUNT = DCOUNT(R.TAB<EB.TS.CONTENT.TYPE>, VM)
+        FOR M = 1 TO TABCONT.COUNT
+            SOURCE.ID = R.TAB<EB.TS.CONTENT.TYPE, M>
+
+            IF SOURCE.ID EQ 'ENQ' THEN
+
+                ENQUIRY.ID = FIELD(R.TAB<EB.TS.SOURCE, M>, " ",1)
+                GOSUB COPY.ENQUIRY
+
+            END
+            IF SOURCE.ID EQ 'COS' THEN
+
+                COS.ID2 = FIELD(R.TAB<EB.TS.SOURCE, M>, " ",1)
+                TYPE = 'COS'
+                CALL MENU.EXTRACTOR(COS.ID2, TYPE)
+
+            END
+
+        NEXT M
+
+        CRT "EB.TABBED.SCREEN>":TAB.ID
+
+    END
+
+    RETURN
+
+COPY.SS:
+
+    CALL F.READ(FN.SS, SS.ID, R.SS, F.SS, SS.ERR)
+
+    IF NOT(SS.ERR) THEN
+
+        FIND 'R' IN R.SS<SSL.USR.TYPE> SETTING Fm, Vm, Sm THEN
+
+            ROUTINE.NAME = R.SS<SSL.USR.FIELD.NO,Vm>
+
+        END
+        ELSE
+
+            ROUTINE.NAME = ''
+
+        END
+        GOSUB COPY.ROUTINE
+
+        CRT "STANDARD.SELECTION>":SS.ID
+
+    END
+
+    RETURN
+
+COPY.DSLIP:
+
+    CALL F.READ(FN.DSF, DSLIP.NAME, R.DSF, F.DSF, DSF.ERR)
+
+    IF NOT(DSF.ERR) THEN
+
+        FLD.COUNT = DCOUNT(R.DSF<EB.DSF.FORMAT>, VM)
+        FOR K = 1 TO FLD.COUNT
+            RTN.COUNT = DCOUNT(R.DSF<EB.DSF.FORMAT, K>, SM)
+            FOR L = 1 TO RTN.COUNT
+                IF R.DSF<EB.DSF.FORMAT, K, L>[1,1] EQ '@' THEN
+                    ROUTINE.NAME = TRIM(FIELD(R.DSF<EB.DSF.FORMAT, K, L>, "@", 2), '', 'F')
+                    GOSUB COPY.ROUTINE
+
+                END
+            NEXT L
+        NEXT K
+
+        CRT "DEAL.SLIP.FORMAT>":DSLIP.NAME
+
+    END
+
+    RETURN
+
+COPY.MAIN.VERSION:
+
+    CALL F.READ(FN.VER,VERSION.ID,R.VER,F.VER,VER.ERR)
+
+    IF NOT(VER.ERR) THEN
+
+        ASSOC.COUNT = DCOUNT(R.VER<EB.VER.ASSOC.VERSION>, VM)
+        FOR J = 1 TO ASSOC.COUNT
+            ASSOC.VERSION.ID = R.VER<EB.VER.ASSOC.VERSION, J>
+            GOSUB COPY.ASSOC.VERSION
+
+        NEXT J
+
+        ENQ.COUNT = DCOUNT(R.VER<EB.VER.DROP.DOWN>, VM)
+        FOR J = 1 TO ENQ.COUNT
+            ENQUIRY.ID = R.VER<EB.VER.DROP.DOWN, J>
+            GOSUB COPY.ENQUIRY
+
+        NEXT J
+
+        VAL.RTN.CNT = DCOUNT(R.VER<EB.VER.VALIDATION.RTN>,@VM)
+        FOR J = 1 TO VAL.RTN.CNT
+
+            IF R.VER<EB.VER.VALIDATION.RTN, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.VALIDATION.RTN, J>, "@", 2), '', 'F')
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.VALIDATION.RTN, J>
+            END
+            GOSUB COPY.ROUTINE
+        NEXT J
+
+        INP.RTN.CNT = DCOUNT(R.VER<EB.VER.INPUT.ROUTINE>,@VM)
+        FOR J = 1 TO INP.RTN.CNT
+
+            IF R.VER<EB.VER.INPUT.ROUTINE, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.INPUT.ROUTINE, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.INPUT.ROUTINE, J>
+            END
+            GOSUB COPY.ROUTINE
+
+        NEXT J
+
+        AUTH.RTN.CNT = DCOUNT(R.VER<EB.VER.AUTH.ROUTINE>,@VM)
+        FOR J = 1 TO AUTH.RTN.CNT
+
+            IF R.VER<EB.VER.AUTH.ROUTINE, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.AUTH.ROUTINE, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.AUTH.ROUTINE, J>
+            END
+            GOSUB COPY.ROUTINE
+
+
+        NEXT J
+
+        CHECK.RTN.CNT = DCOUNT(R.VER<EB.VER.CHECK.REC.RTN>,@VM)
+        FOR J = 1 TO CHECK.RTN.CNT
+
+            IF R.VER<EB.VER.CHECK.REC.RTN, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.CHECK.REC.RTN, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.CHECK.REC.RTN, J>
+            END
+            GOSUB COPY.ROUTINE
+
+        NEXT J
+
+        ID.RTN.CNT = DCOUNT(R.VER<EB.VER.ID.RTN>,@VM)
+        FOR J = 1 TO ID.RTN.CNT
+
+            IF R.VER<EB.VER.ID.RTN, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.ID.RTN, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.ID.RTN, J>
+            END
+            GOSUB COPY.ROUTINE
+        NEXT J
+
+        AFTER.UNAU.RTN.CNT = DCOUNT(R.VER<EB.VER.AFTER.UNAU.RTN>,@VM)
+        FOR J = 1 TO AFTER.UNAU.RTN.CNT
+
+            IF R.VER<EB.VER.AFTER.UNAU.RTN, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.AFTER.UNAU.RTN, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.AFTER.UNAU.RTN, J>
+            END
+            GOSUB COPY.ROUTINE
+        NEXT J
+
+        BEFORE.AUTH.RTN.CNT = DCOUNT(R.VER<EB.VER.BEFORE.AUTH.RTN>,@VM)
+        FOR J = 1 TO BEFORE.AUTH.RTN.CNT
+
+            IF R.VER<EB.VER.BEFORE.AUTH.RTN, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.BEFORE.AUTH.RTN, J>, "@", 2), '', 'F')
+
+
+            END
+            ELSE
+                ROUTINE.NAME = R.VER<EB.VER.BEFORE.AUTH.RTN, J>
+            END
+            GOSUB COPY.ROUTINE
+        NEXT J
+
+        AUT.CNT = DCOUNT(R.VER<EB.VER.AUTOM.FIELD.NO>, @VM)
+        FOR J = 1 TO AUT.CNT
+            IF R.VER<EB.VER.AUT.NEW.CONTENT, J>[1,1] EQ '@' THEN
+                ROUTINE.NAME = TRIM(FIELD(R.VER<EB.VER.AUT.NEW.CONTENT, J>, "@", 2), '', 'F')
+                GOSUB COPY.ROUTINE
+
+            END
+
+        NEXT J
+
+        DSLIP.CNT = DCOUNT(R.VER<EB.VER.D.SLIP.FORMAT>,@VM)
+        FOR J = 1 TO DSLIP.CNT
+            DSLIP.NAME = R.VER<EB.VER.D.SLIP.FORMAT, J>
+            GOSUB COPY.DSLIP
+
+        NEXT J
+
+        IF R.VER<EB.VER.NEXT.VERSION> NE '' THEN
+            NXT.VERSION.ID = R.VER<EB.VER.NEXT.VERSION>
+NEXT.VERSION.ID = FIELD(NXT.VERSION.ID," ",1)
+
+			IF NEXT.VERSION.ID NE VERSION.ID THEN
+            TYPE = ''
+            CALL MENU.EXTRACTOR(NXT.VERSION.ID, TYPE)
+END
+        END
+
+        CRT "VERSION>":VERSION.ID
+
+    END
+
+    RETURN
+
+COPY.ROUTINE:
+
+
+    IF ROUTINE.NAME EQ '' THEN RETURN
+
+
+
+    CALL F.READ(FN.PF, ROUTINE.NAME, R.PF, F.PF, PF.ERR)
+    IF NOT(PF.ERR) THEN
+        CRT "PGM.FILE>":ROUTINE.NAME
+    END
+
+    CALL F.READ(FN.API, ROUTINE.NAME, R.API, F.API, API.ERR)
+    IF NOT(API.ERR) THEN
+        CRT "EB.API>":ROUTINE.NAME
+    END
+
+*    LOCATE ROUTINE.NAME IN RTN.CHK<2,1> SETTING RTN.POS THEN
+
+*   PRINT "!RTN!":RTN.CHK<1, RTN.POS>:"/":ROUTINE.NAME
+*        CRT RTN.CHK<1, RTN.POS> :">":ROUTINE.NAME
+*    END
+ *   ELSE
+
+ *       EXECUTE "jshow -c " : ROUTINE.NAME : CAPTURING OUTPUT.STRING
+  *      FOLDER.NAME = FIELD(OUTPUT.STRING<3>, 'file ', 2)
+   *     IF RIGHT(FOLDER.NAME, 7) EQ '.SOURCE' THEN FOLDER.NAME = ''
+    *    RTN.CHK<1,-1> = FOLDER.NAME
+     *   RTN.CHK<2,-1> = ROUTINE.NAME
+*    PRINT "!RTN!":FOLDER.NAME:"/":ROUTINE.NAME
+*        CRT FOLDER.NAME:">":ROUTINE.NAME
+
+ *   END
+
+    RETURN
+END
