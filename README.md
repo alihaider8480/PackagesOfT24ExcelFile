@@ -9,8 +9,9 @@ to search karna ka bad waha pa jo name show ho rahe honga wo bhi ae ga or uski i
 ![image](https://user-images.githubusercontent.com/40827670/223682245-934a8547-8d1b-4aa3-a725-c51a3973a3fd.png)
 
 
-ab mujha agar koi HM jasa teller ka cheheya to ma kia karonga ak login karonga tRun EX sa us env pa or phir ma wo routine ka name MENU.PROCESSOR likha ka enter karonga to phir ma uska HM menu ka name donga jasa Teller to usko enter karonga to wo aik file bna daga %commo.. wala path pa or phir us file ko agar mujha ya bhi cheya ka ya core ki hai ya core ki ni hai us ma kuch records to ma uska lia FoundNotFound ki routine chalo ga isi tarha usko chalana ka tarika FoundNotFoundHELP.FILE.txt is file ma hai 
-                                                  how we can extract complete package from others environment
+ab mujha agar koi HM jasa teller ka cheheya to ma kia karonga ak login karonga tRun EX sa us env pa or phir ma wo routine ka name MENU.PROCESSOR likha ka enter karonga to phir ma uska HM menu ka name donga jasa Teller to usko enter karonga to wo aik file bna daga %commo.. wala path pa or phir us file ko agar mujha ya bhi cheya ka ya core ki hai ya core ki ni hai us ma kuch records to ma uska lia FoundNotFound ki routine chalo ga isi tarha usko chalana ka tarika FoundNotFoundHELP.FILE.txt is file ma hai or ya routine model bank local pa chaalaa gi ya env pa bhi chala sakta ha chalana ka bad phir wo 2 files bana ka daga found ki and not found ki
+                                                  
+                                                 ya english ma thora hai dakha lo  how we can extract complete package from others environment
  1: first we run routine that routine work to extract HM helptext menu
           we have 2 routines but we execute one only MENU.PROCESSOR it will call second one own  MENU.EXTRACTOR
  2: when it execute succesfuly it create a file in &como... if this file is not be there we can copy all record from classic mode when we execute MENU.PROCESSOR all             record showing in classic mode too.
