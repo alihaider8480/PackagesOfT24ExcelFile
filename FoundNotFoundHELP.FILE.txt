@@ -1,10 +1,11 @@
-1.PUT THIS FILE IN THE FOLLOWING PATH> D:\Temenos\R21MBR\TAFJ\samples\basic
+1.PUT THIS FILE PKMB.READ.SL.b IN THE FOLLOWING PATH> D:\Temenos\R21MBR\TAFJ\samples\basic
 
 2.RUN THE TERATERM FROM LOCALHOST
 
 3.tCompile D:\Temenos\R21MBR\TAFJ\samples\basic\PKMB.READ.SL.b
 
 4.After Compilation it will asked you the File which you want to check in Modle Bank.
+  first we put that file in &SAVEDLISTS&  and make that file extension with .SL those we extracted from Main.Processor
 
 5.Enter the File Name you put in the following path> D:\Temenos\R21MBR\bnk\UD\&SAVEDLISTS& 
 
